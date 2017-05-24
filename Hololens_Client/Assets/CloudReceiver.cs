@@ -38,7 +38,7 @@ public class CloudReceiver : MonoBehaviour {
         Buffer.BlockCopy(_recieveBuffer, 0, recData, 0, received);
 
         //Process data here the way you want , all your bytes will be stored in recData
-        var receivedString = System.Text.Encoding.Default.GetString(result);
+        var receivedString = System.Text.Encoding.Default.GetString(recData);
 
         //Start receiving again
         _clientSocket.BeginReceive(_recieveBuffer, 0, _recieveBuffer.Length, SocketFlags.None, new AsyncCallback(ReceiveCallback), null);
