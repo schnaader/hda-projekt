@@ -35,6 +35,7 @@ sysinfo.txt
 
 # Built Windows App
 *.exe
+*/*_Data/
 
 # Miscellanous
 *.log
