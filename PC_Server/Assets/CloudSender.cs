@@ -1,4 +1,5 @@
 ﻿using UnityEngine;
+using UnityEngine.UI;
 using System;
 using System.Net;
 using System.Net.Sockets;
@@ -7,11 +8,14 @@ using System.IO;
 
 public class CloudSender : MonoBehaviour {
     private byte[] _recieveBuffer = new byte[32 * 1024 * 1024];
+    private Text textInGui;
 
     public Socket m_socListener, m_socWorker = null;
 
     void Start()
     {
+        textInGui = GameObject.FindObjectOfType<Text>();
+
         StartListening();
     }
 
@@ -36,10 +40,12 @@ public class CloudSender : MonoBehaviour {
             m_socListener.Listen(4);
             // create the call back for any client connections...
             m_socListener.BeginAccept(new AsyncCallback(OnClientConnect), null);
+            textInGui.text = String.Format("Listening on {0}...", ipLocal);
         }
         catch (SocketException ex)
         {
             Debug.Log(ex.Message);
+            textInGui.text = ex.Message;
         }
     }
 
