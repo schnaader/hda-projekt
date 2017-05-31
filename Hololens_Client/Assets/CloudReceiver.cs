@@ -1,4 +1,5 @@
 ﻿using UnityEngine;
+using UnityEngine.UI;
 using System;
 using System.Net;
 using System.Net.Sockets;
@@ -9,6 +10,7 @@ public class CloudReceiver : MonoBehaviour {
     private Socket _clientSocket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
     private byte[] _recieveBuffer = new byte[32*1024*1024];
     private Mesh mesh;
+    private Text textInGui;
 
     private void SetupClient()
     {
@@ -19,6 +21,7 @@ public class CloudReceiver : MonoBehaviour {
         catch (SocketException ex)
         {
             Debug.Log(ex.Message);
+            textInGui.text = ex.Message;
         }
 
         _clientSocket.BeginReceive(_recieveBuffer, 0, _recieveBuffer.Length, SocketFlags.None, new AsyncCallback(ReceiveCallback), null);
@@ -39,6 +42,7 @@ public class CloudReceiver : MonoBehaviour {
 
         //Process data here the way you want , all your bytes will be stored in recData
         var receivedString = System.Text.Encoding.Default.GetString(recData);
+        textInGui.text = "Empfangener Text: " + receivedString;
 
         //Start receiving again
         _clientSocket.BeginReceive(_recieveBuffer, 0, _recieveBuffer.Length, SocketFlags.None, new AsyncCallback(ReceiveCallback), null);
@@ -58,8 +62,9 @@ public class CloudReceiver : MonoBehaviour {
     void Start() {
 
         mesh = new Mesh();
-
         GetComponent<MeshFilter>().mesh = mesh;
+
+        textInGui = GameObject.FindObjectOfType<Text>();
 
         SetupClient();
     }
