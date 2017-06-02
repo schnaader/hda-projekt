@@ -42,6 +42,19 @@ public class QRCode : MonoBehaviour {
     {
         if (result.success)
         {
+            photoCaptureObject.TakePhotoAsync(OnCapturedPhotoToMemory);
+        }
+        else
+        {
+            Debug.LogError("Unable to start photo mode!");
+            gui.text = "Unable to start photo mode!";
+        }
+    }
+    /*
+    private void OnPhotoModeStarted(PhotoCapture.PhotoCaptureResult result)
+    {
+        if (result.success)
+        {
             string filename = string.Format(@"CapturedImage{0}_n.jpg", Time.time);
             string filePath = System.IO.Path.Combine(Application.persistentDataPath, filename);
 
@@ -55,7 +68,8 @@ public class QRCode : MonoBehaviour {
             Debug.LogError("Unable to start photo mode!");
             gui.text = "Unable to start photo mode!";
         }
-    }
+    }*/
+    /*
     void OnCapturedPhotoToDisk(PhotoCapture.PhotoCaptureResult result)
     {
         if (result.success)
@@ -68,6 +82,36 @@ public class QRCode : MonoBehaviour {
             Debug.Log("Failed to save Photo to disk");
             gui.text = "Failed to save Photo to disk";
         }
+    }
+   */
+        void OnCapturedPhotoToMemory(PhotoCapture.PhotoCaptureResult result, PhotoCaptureFrame photoCaptureFrame)
+    {
+        if (result.success)
+        {
+            List<byte> imageBufferList = new List<byte>();
+            // Copy the raw IMFMediaBuffer data into our empty byte list.
+            photoCaptureFrame.CopyRawImageDataIntoBuffer(imageBufferList);
+
+            // In this example, we captured the image using the BGRA32 format.
+            // So our stride will be 4 since we have a byte for each rgba channel.
+            // The raw image data will also be flipped so we access our pixel data
+            // in the reverse order.
+            int stride = 4;
+            float denominator = 1.0f / 255.0f;
+            List<Color> colorArray = new List<Color>();
+            for (int i = imageBufferList.Count - 1; i >= 0; i -= stride)
+            {
+                float a = (int)(imageBufferList[i - 0]) * denominator;
+                float r = (int)(imageBufferList[i - 1]) * denominator;
+                float g = (int)(imageBufferList[i - 2]) * denominator;
+                float b = (int)(imageBufferList[i - 3]) * denominator;
+
+                colorArray.Add(new Color(r, g, b, a));
+            }
+            gui.text = "Do Something";
+            // Now we could do something with the array such as texture.SetPixels() or run image processing on the list
+        }
+        photoCaptureObject.StopPhotoModeAsync(OnStoppedPhotoMode);
     }
 
 
