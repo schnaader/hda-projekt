@@ -316,7 +316,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 1
     m_LineSpacing: 1
-  m_Text: 
+  m_Text: App wurde gestartet
 --- !u!222 &1074877703
 CanvasRenderer:
   m_ObjectHideFlags: 0
