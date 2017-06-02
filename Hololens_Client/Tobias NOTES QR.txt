@@ -1,0 +1,4 @@
+https://developer.microsoft.com/en-us/windows/mixed-reality/locatable_camera_in_unity#troubleshooting
+https://forums.hololens.com/discussion/1482/barcode-qr-code-detection
+https://developer.microsoft.com/en-us/windows/mixed-reality/locatable_camera
+https://developer.microsoft.com/en-us/windows/mixed-reality/locatable_camera_in_unity
