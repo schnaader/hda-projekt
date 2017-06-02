@@ -32,8 +32,8 @@ public class CloudSender : MonoBehaviour {
         {
             //create the listening socket...
             m_socListener = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-            //IPEndPoint ipLocal = new IPEndPoint(IPAddress.Any, 8221);
-            IPEndPoint ipLocal = new IPEndPoint(IPAddress.Loopback, 6670);
+            IPEndPoint ipLocal = new IPEndPoint(IPAddress.Any, 6670);
+            //IPEndPoint ipLocal = new IPEndPoint(IPAddress.Loopback, 6670);
             //bind to local IP Address...
             m_socListener.Bind(ipLocal);
             //start listening...
@@ -55,6 +55,8 @@ public class CloudSender : MonoBehaviour {
     {
         try
         {
+            textInGui.text = "Client is connecting...";
+
             m_socWorker = m_socListener.EndAccept(asyn);
             // now start to listen for any data...
             m_socWorker.BeginReceive(m_DataBuffer, 0, m_DataBuffer.Length, SocketFlags.None, new AsyncCallback(ReceiveCallback), null);
@@ -85,6 +87,10 @@ public class CloudSender : MonoBehaviour {
         //Copy the recieved data into new buffer , to avoid null bytes
         byte[] recData = new byte[received];
         Buffer.BlockCopy(_recieveBuffer, 0, recData, 0, received);
+
+        //Process data here the way you want , all your bytes will be stored in recData
+        var receivedString = System.Text.Encoding.Default.GetString(recData);
+        textInGui.text = "Empfangener Text: " + receivedString;
 
         //Start receiving again
         m_socWorker.BeginReceive(_recieveBuffer, 0, _recieveBuffer.Length, SocketFlags.None, new AsyncCallback(ReceiveCallback), null);
