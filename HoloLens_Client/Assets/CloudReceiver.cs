@@ -3,76 +3,68 @@ using UnityEngine.UI;
 using System;
 using System.Net;
 using System.Net.Sockets;
+using System.IO;
+
+#if !UNITY_EDITOR
+using Windows.Networking.Sockets;
+#endif
 
 public class CloudReceiver : MonoBehaviour
 {
-
-    private Socket _clientSocket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-    private byte[] _recieveBuffer = new byte[32 * 1024 * 1024];
     private Mesh mesh;
     private Text textInGui;
-
-    private void SetupClient()
-    {
-        try
-        {
-            _clientSocket.Connect(new IPEndPoint(IPAddress.Loopback, 6670));
-        }
-        catch (SocketException ex)
-        {
-            Debug.Log(ex.Message);
-            textInGui.text = ex.Message;
-        }
-
-        _clientSocket.BeginReceive(_recieveBuffer, 0, _recieveBuffer.Length, SocketFlags.None, new AsyncCallback(ReceiveCallback), null);
-
-    }
-
-    private void ReceiveCallback(IAsyncResult AR)
-    {
-        //Check how much bytes are recieved and call EndRecieve to finalize handshake
-        int received = _clientSocket.EndReceive(AR);
-
-        if (received <= 0)
-            return;
-
-        //Copy the recieved data into new buffer , to avoid null bytes
-        byte[] recData = new byte[received];
-        Buffer.BlockCopy(_recieveBuffer, 0, recData, 0, received);
-
-        //Process data here the way you want , all your bytes will be stored in recData
-        var receivedString = System.Text.Encoding.Default.GetString(recData);
-        textInGui.text = "Empfangener Text: " + receivedString;
-
-        //Start receiving again
-        _clientSocket.BeginReceive(_recieveBuffer, 0, _recieveBuffer.Length, SocketFlags.None, new AsyncCallback(ReceiveCallback), null);
-    }
-
-    private ushort ReadUInt16(byte[] data, ref int index)
-    {
-        ushort result = data[index];
-        result += (ushort)(data[index + 1] << 8);
-
-        index += 2;
-
-        return result;
-    }
 
     // Use this for initialization
     void Start()
     {
 
-        mesh = new Mesh();
-        GetComponent<MeshFilter>().mesh = mesh;
+        //mesh = new Mesh();
+        //GetComponent<MeshFilter>().mesh = mesh;
 
+#if !UNITY_EDITOR
         textInGui = GameObject.FindObjectOfType<Text>();
 
         SetupClient();
+#endif
     }
 
-    // Update is called once per frame
-    void Update()
+#if !UNITY_EDITOR
+    // Die Adresse des PCs, auf dem PC_Server läuft
+    private string serverAdress = "172.17.20.64";
+
+    private async void SetupClient()
     {
+        try
+        {
+            //Create the StreamSocket and establish a connection to the echo server.
+            Windows.Networking.Sockets.StreamSocket socket = new Windows.Networking.Sockets.StreamSocket();
 
+            //The server hostname that we will be establishing a connection to. We will be running the server and client locally,
+            //so we will use localhost as the hostname.
+            Windows.Networking.HostName serverHost = new Windows.Networking.HostName(serverAdress);
+
+            //Every protocol typically has a standard port number. For example HTTP is typically 80, FTP is 20 and 21, etc.
+            //For the echo server/client application we will use a random port 1337.
+            string serverPort = "6670";
+            await socket.ConnectAsync(serverHost, serverPort);
+
+            //Write data to the echo server.
+            Stream streamOut = socket.OutputStream.AsStreamForWrite();
+            StreamWriter writer = new StreamWriter(streamOut);
+            string request = "test";
+            await writer.WriteLineAsync(request);
+            await writer.FlushAsync();
+
+            //Read data from the echo server.
+            Stream streamIn = socket.InputStream.AsStreamForRead();
+            StreamReader reader = new StreamReader(streamIn);
+            string response = await reader.ReadLineAsync();
+        }
+        catch (Exception e)
+        {
+            Debug.Log(e.Message);
+            textInGui.text = e.Message;
+        }
     }
+#endif
 }
