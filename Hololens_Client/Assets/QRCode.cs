@@ -9,12 +9,19 @@ using UnityEngine.UI;
 #endif
 public class QRCode : MonoBehaviour {
     private Text gui;
+    private Image image;
+    private Material mat;
     // Use this for initialization
     PhotoCapture photoCaptureObject = null;
+    Texture2D ImageTexture = null;
     void Start()
     {
         gui = GameObject.FindObjectOfType<Text>();
+        image = GameObject.FindObjectOfType<Image>();
+        mat = image.GetComponent<Renderer>().material;
         PhotoCapture.CreateAsync(false, OnPhotoCaptureCreated);
+        Resolution cameraResolution = PhotoCapture.SupportedResolutions.OrderByDescending((res) => res.width * res.height).First();
+        ImageTexture = new Texture2D(cameraResolution.width, cameraResolution.height);
 
     }
     void OnPhotoCaptureCreated(PhotoCapture captureObject)
@@ -88,7 +95,7 @@ public class QRCode : MonoBehaviour {
     {
         if (result.success)
         {
-            List<byte> imageBufferList = new List<byte>();
+           /* List<byte> imageBufferList = new List<byte>();
             // Copy the raw IMFMediaBuffer data into our empty byte list.
             photoCaptureFrame.CopyRawImageDataIntoBuffer(imageBufferList);
 
@@ -107,9 +114,11 @@ public class QRCode : MonoBehaviour {
                 float b = (int)(imageBufferList[i - 3]) * denominator;
 
                 colorArray.Add(new Color(r, g, b, a));
-            }
+            }*/
             gui.text = "Do Something";
             // Now we could do something with the array such as texture.SetPixels() or run image processing on the list
+            photoCaptureFrame.UploadImageDataToTexture(ImageTexture);
+            mat.mainTexture = ImageTexture;
         }
         photoCaptureObject.StopPhotoModeAsync(OnStoppedPhotoMode);
     }
