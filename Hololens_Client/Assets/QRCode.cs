@@ -10,7 +10,7 @@ using System;
 #endif
 public class QRCode : MonoBehaviour {
     private Text gui;
-    private Image image;
+    private GameObject image;
     private Material mat;
     // Use this for initialization
     PhotoCapture photoCaptureObject = null;
@@ -18,7 +18,7 @@ public class QRCode : MonoBehaviour {
     void Start()
     {
         gui = GameObject.FindObjectOfType<Text>();
-        image = GameObject.FindObjectOfType<Image>();
+        image = GameObject.Find("Image");
         if (image == null)
         {
             gui.text = "Could not find image object";
