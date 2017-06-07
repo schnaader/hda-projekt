@@ -3,3 +3,4 @@ https://forums.hololens.com/discussion/1482/barcode-qr-code-detection
 https://developer.microsoft.com/en-us/windows/mixed-reality/locatable_camera
 https://developer.microsoft.com/en-us/windows/mixed-reality/locatable_camera_in_unity
 https://forum.unity3d.com/threads/holographic-photo-blending-with-photocapture.416023/
+https://docs.unity3d.com/Manual/index.html
