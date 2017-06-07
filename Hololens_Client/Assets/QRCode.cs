@@ -4,6 +4,7 @@ using System.Linq;
 using UnityEngine;
 using UnityEngine.VR.WSA.WebCam;
 using UnityEngine.UI;
+using System;
 #if !UNITY_EDITOR
 //using ZXing;
 #endif
@@ -18,11 +19,20 @@ public class QRCode : MonoBehaviour {
     {
         gui = GameObject.FindObjectOfType<Text>();
         image = GameObject.FindObjectOfType<Image>();
+        if (image == null)
+        {
+            gui.text = "Could not find image object";
+            return;
+        }
         mat = image.GetComponent<Renderer>().material;
+        if (mat == null)
+        {
+            gui.text = "Could not find renderer or material";
+            return;
+        }
         PhotoCapture.CreateAsync(false, OnPhotoCaptureCreated);
         Resolution cameraResolution = PhotoCapture.SupportedResolutions.OrderByDescending((res) => res.width * res.height).First();
         ImageTexture = new Texture2D(cameraResolution.width, cameraResolution.height);
-
     }
     void OnPhotoCaptureCreated(PhotoCapture captureObject)
     {
