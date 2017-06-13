@@ -8,7 +8,7 @@ using System;
 #if !UNITY_EDITOR
 //using ZXing;
 #endif
-public class QRCode : MonoBehaviour {
+public class LocatedCameratoTexture : MonoBehaviour {
     private Text gui;
     private GameObject image;
     private Material mat;
