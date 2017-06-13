@@ -30,7 +30,7 @@ public class CloudReceiver : MonoBehaviour
 
 #if !UNITY_EDITOR
     // Die Adresse des PCs, auf dem PC_Server läuft
-    private string serverAdress = "172.17.20.64";
+    private string serverAdress = "172.17.25.227";
 
     private async void SetupClient()
     {
@@ -48,17 +48,24 @@ public class CloudReceiver : MonoBehaviour
             string serverPort = "6670";
             await socket.ConnectAsync(serverHost, serverPort);
 
+            textInGui.text = "Sending ready message to server...";
+
             //Write data to the echo server.
             Stream streamOut = socket.OutputStream.AsStreamForWrite();
             StreamWriter writer = new StreamWriter(streamOut);
-            string request = "test";
+            string request = "Ready";
             await writer.WriteLineAsync(request);
             await writer.FlushAsync();
 
-            //Read data from the echo server.
-            Stream streamIn = socket.InputStream.AsStreamForRead();
-            StreamReader reader = new StreamReader(streamIn);
-            string response = await reader.ReadLineAsync();
+            while (true)
+            {
+                //Read data from the echo server.
+                Stream streamIn = socket.InputStream.AsStreamForRead();
+                StreamReader reader = new StreamReader(streamIn);
+                string response = await reader.ReadLineAsync();
+
+                textInGui.text = "Message from server: <" + response + ">";
+            }
         }
         catch (Exception e)
         {

@@ -5,6 +5,7 @@ using System.Net;
 using System.Net.Sockets;
 using System.Text;
 using System.IO;
+using System.Threading;
 
 public class CloudSender : MonoBehaviour {
     private byte[] _recieveBuffer = new byte[32 * 1024 * 1024];
@@ -60,9 +61,6 @@ public class CloudSender : MonoBehaviour {
             m_socWorker = m_socListener.EndAccept(asyn);
             // now start to listen for any data...
             m_socWorker.BeginReceive(m_DataBuffer, 0, m_DataBuffer.Length, SocketFlags.None, new AsyncCallback(ReceiveCallback), null);
-
-            // Testdaten schicken
-            SendData(Encoding.ASCII.GetBytes("Hello client"));
         }
         catch (ObjectDisposedException)
         {
@@ -90,7 +88,10 @@ public class CloudSender : MonoBehaviour {
 
         //Process data here the way you want , all your bytes will be stored in recData
         var receivedString = System.Text.Encoding.Default.GetString(recData);
-        textInGui.text = "Empfangener Text: " + receivedString;
+        textInGui.text = received.ToString() + " bytes received from client, sending test data...";
+
+        // Testdaten schicken
+        SendData(Encoding.ASCII.GetBytes("Hello client\n"));
 
         //Start receiving again
         m_socWorker.BeginReceive(_recieveBuffer, 0, _recieveBuffer.Length, SocketFlags.None, new AsyncCallback(ReceiveCallback), null);
