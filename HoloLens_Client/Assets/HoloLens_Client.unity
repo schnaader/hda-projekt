@@ -118,7 +118,7 @@ GameObject:
   - component: {fileID: 541228316}
   - component: {fileID: 541228315}
   m_Layer: 0
-  m_Name: GameObject
+  m_Name: CloudReceiver Skript
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -158,7 +158,7 @@ GameObject:
   - component: {fileID: 777938556}
   - component: {fileID: 777938555}
   m_Layer: 0
-  m_Name: GameObject QR
+  m_Name: QRCode Skript
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
