@@ -10,6 +10,7 @@ using System.Threading;
 public class CloudSender : MonoBehaviour {
     private byte[] _recieveBuffer = new byte[32 * 1024 * 1024];
     private Text textInGui;
+    private int messageCount = 0;
 
     public Socket m_socListener, m_socWorker = null;
 
@@ -88,16 +89,22 @@ public class CloudSender : MonoBehaviour {
 
         //Process data here the way you want , all your bytes will be stored in recData
         var receivedString = System.Text.Encoding.Default.GetString(recData);
-        textInGui.text = received.ToString() + " bytes received from client, sending test data...";
+        textInGui.text = "Ready signal received from client, sending test data #" + messageCount + "...";
 
         // Testdaten schicken
-        SendData(Encoding.ASCII.GetBytes("Hello client\n"));
+        messageCount++;
+        SendLineToClient("Hello client #" + messageCount);
 
         //Start receiving again
         m_socWorker.BeginReceive(_recieveBuffer, 0, _recieveBuffer.Length, SocketFlags.None, new AsyncCallback(ReceiveCallback), null);
     }
 
-    private void SendData(byte[] data)
+    private void SendLineToClient(string line)
+    {
+        SendDataToClient(Encoding.ASCII.GetBytes(line + "\n"));
+    }
+
+    private void SendDataToClient(byte[] data)
     {
         if (m_socWorker == null) return;
 
