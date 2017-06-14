@@ -31,20 +31,30 @@ public class LocatedCameratoTexture : MonoBehaviour {
             return;
         }
         PhotoCapture.CreateAsync(false, OnPhotoCaptureCreated);
-        Resolution cameraResolution = PhotoCapture.SupportedResolutions.OrderByDescending((res) => res.width * res.height).First();
-        ImageTexture = new Texture2D(cameraResolution.width, cameraResolution.height);
+        Resolution? cameraResolution = PhotoCapture.SupportedResolutions.OrderByDescending((res) => res.width * res.height).FirstOrDefault();
+        if (cameraResolution == null)
+        {
+            gui.text = "Could not determine camera resolution";
+            return;
+        }
+        ImageTexture = new Texture2D(cameraResolution.Value.width, cameraResolution.Value.height);
     }
     void OnPhotoCaptureCreated(PhotoCapture captureObject)
     {
         gui.text = "Start Capture";
         photoCaptureObject = captureObject;
 
-        Resolution cameraResolution = PhotoCapture.SupportedResolutions.OrderByDescending((res) => res.width * res.height).First();
+        Resolution? cameraResolution = PhotoCapture.SupportedResolutions.OrderByDescending((res) => res.width * res.height).FirstOrDefault();
+        if (cameraResolution == null)
+        {
+            gui.text = "Could not determine camera resolution";
+            return;
+        }
 
         CameraParameters c = new CameraParameters();
         c.hologramOpacity = 0.0f;
-        c.cameraResolutionWidth = cameraResolution.width;
-        c.cameraResolutionHeight = cameraResolution.height;
+        c.cameraResolutionWidth = cameraResolution.Value.width;
+        c.cameraResolutionHeight = cameraResolution.Value.height;
         c.pixelFormat = CapturePixelFormat.BGRA32;
 
         captureObject.StartPhotoModeAsync(c, OnPhotoModeStarted);
