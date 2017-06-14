@@ -32,9 +32,9 @@ public class LocatedCameraToTexture : MonoBehaviour {
         }
 
         Resolution? cameraResolution = PhotoCapture.SupportedResolutions.OrderByDescending((res) => res.width * res.height).FirstOrDefault();
-        if (cameraResolution == null)
+        if ((cameraResolution == null) || (cameraResolution.Value.width == 0))
         {
-            gui.text = "Could not determine camera resolution";
+            gui.text = "Could not determine camera resolution - are you running on HoloLens?";
             return;
         }
         ImageTexture = new Texture2D(cameraResolution.Value.width, cameraResolution.Value.height);
@@ -47,7 +47,7 @@ public class LocatedCameraToTexture : MonoBehaviour {
         photoCaptureObject = captureObject;
 
         Resolution? cameraResolution = PhotoCapture.SupportedResolutions.OrderByDescending((res) => res.width * res.height).FirstOrDefault();
-        if (cameraResolution == null)
+        if ((cameraResolution == null) || (cameraResolution.Value.width == 0))
         {
             gui.text = "Could not determine camera resolution";
             return;
