@@ -4,6 +4,7 @@ using System;
 using System.Net;
 using System.Net.Sockets;
 using System.IO;
+using System.Collections.Generic;
 
 #if !UNITY_EDITOR
 using System.Threading;
@@ -11,9 +12,21 @@ using System.Threading.Tasks;
 using Windows.Networking.Sockets;
 #endif
 
+public class TaskResult
+{
+    public bool succeeded;
+    public string message;
+
+    public TaskResult(bool succeeded, string message)
+    {
+        this.succeeded = succeeded;
+        this.message = message;
+    }
+}
+
 public class CloudReceiver : MonoBehaviour
 {
-    private Mesh mesh;
+    //private Mesh mesh;
     private Text textInGui;
     private int readyCount = 0;
 
@@ -28,24 +41,35 @@ public class CloudReceiver : MonoBehaviour
         //mesh = new Mesh();
         //GetComponent<MeshFilter>().mesh = mesh;
 
+        TaskResult result;
+
         textInGui = GameObject.FindObjectOfType<Text>();
 
         var setupClientTask = Task.Run(SetupClient);
         setupClientTask.Wait();
-        textInGui.text = setupClientTask.Result;
+        result = setupClientTask.Result;
+        textInGui.text = result.message;
+        if (!result.succeeded) return;
 
-        while (true)
+        do
         {
             var receiveMessageTask = Task.Run(ReceiveMessage);
             receiveMessageTask.Wait();
-            textInGui.text = "Message from server: <" + receiveMessageTask.Result + ">";
-        }
+            result = receiveMessageTask.Result;
+            if (result.succeeded)
+            {
+                textInGui.text = "Message from server: <" + result.message + ">";
+            } else
+            {
+                textInGui.text = "Error: " + result.message;
+            }
+        } while (result.succeeded);
     }
 
     // Die Adresse des PCs, auf dem PC_Server läuft
     private string serverAdress = "172.17.25.227";
 
-    private async Task<string> SetupClient()
+    private async Task<TaskResult> SetupClient()
     {
         try
         {
@@ -63,13 +87,13 @@ public class CloudReceiver : MonoBehaviour
         }
         catch (Exception e)
         {
-            return e.Message;
+            return new TaskResult(false, e.Message);
         }
 
-        return "OK";
+        return new TaskResult(true, "OK");
     }
 
-    private async Task<string> ReceiveMessage()
+    private async Task<TaskResult> ReceiveMessage()
     {
         string response = "no response";
 
@@ -90,10 +114,10 @@ public class CloudReceiver : MonoBehaviour
             response = await reader.ReadLineAsync();
         } catch (Exception e)
         {
-            return e.Message;
+            return new TaskResult(false, e.Message);
         }
 
-        return response;
+        return new TaskResult(true, response);
     }
 #endif
 }
