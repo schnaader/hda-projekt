@@ -30,7 +30,7 @@ public class LocatedCameraToTexture : MonoBehaviour {
             gui.text = "Could not find renderer or material";
             return;
         }
-        PhotoCapture.CreateAsync(false, OnPhotoCaptureCreated);
+
         Resolution? cameraResolution = PhotoCapture.SupportedResolutions.OrderByDescending((res) => res.width * res.height).FirstOrDefault();
         if (cameraResolution == null)
         {
@@ -38,6 +38,8 @@ public class LocatedCameraToTexture : MonoBehaviour {
             return;
         }
         ImageTexture = new Texture2D(cameraResolution.Value.width, cameraResolution.Value.height);
+
+        PhotoCapture.CreateAsync(false, OnPhotoCaptureCreated);
     }
     void OnPhotoCaptureCreated(PhotoCapture captureObject)
     {
