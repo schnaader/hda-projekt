@@ -24,7 +24,7 @@ public class DepthSourceView : MonoBehaviour
     private int[] _Triangles;
     
     // Only works at 4 right now
-    private const int _DownsampleSize = 4;
+    private const int _DownsampleSize = 2;
     private const double _DepthScale = 0.1f;
     private const int _Speed = 50;
     
@@ -215,9 +215,9 @@ public class DepthSourceView : MonoBehaviour
     {
         double sum = 0.0;
         
-        for (int y1 = y; y1 < y + 4; y1++)
+        for (int y1 = y; y1 < y + _DownsampleSize; y1++)
         {
-            for (int x1 = x; x1 < x + 4; x1++)
+            for (int x1 = x; x1 < x + _DownsampleSize; x1++)
             {
                 int fullIndex = (y1 * width) + x1;
                 
@@ -229,7 +229,7 @@ public class DepthSourceView : MonoBehaviour
             }
         }
 
-        return sum / 16;
+        return sum / (_DownsampleSize * _DownsampleSize);
     }
 
     void OnApplicationQuit()
