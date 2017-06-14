@@ -32,7 +32,9 @@ public class CloudReceiver : MonoBehaviour
 
 #if !UNITY_EDITOR
     private StreamSocket socket;
-
+    private bool guiTextChanged = false;
+    private System.Object guiTextLock = new System.Object();
+    private String guiText;
 
     // Use this for initialization
     void Start()
@@ -41,29 +43,38 @@ public class CloudReceiver : MonoBehaviour
         //mesh = new Mesh();
         //GetComponent<MeshFilter>().mesh = mesh;
 
-        TaskResult result;
-
         textInGui = GameObject.FindObjectOfType<Text>();
 
         var setupClientTask = Task.Run(SetupClient);
         setupClientTask.Wait();
-        result = setupClientTask.Result;
+        TaskResult result = setupClientTask.Result;
         textInGui.text = result.message;
         if (!result.succeeded) return;
 
-        do
+        Task.Run(StartAsyncReceiveLoop);
+    }
+
+    private void Update()
+    {
+        lock(guiTextLock)
         {
-            var receiveMessageTask = Task.Run(ReceiveMessage);
-            receiveMessageTask.Wait();
-            result = receiveMessageTask.Result;
-            if (result.succeeded)
+            if (guiTextChanged)
             {
-                textInGui.text = "Message from server: <" + result.message + ">";
-            } else
-            {
-                textInGui.text = "Error: " + result.message;
+                textInGui.text = guiText;
+                guiTextChanged = false;
             }
-        } while (result.succeeded);
+
+        }
+    }
+
+    private void ChangeGuiText(string text)
+    {
+        lock(guiTextLock)
+        {
+            guiText = text;
+            guiTextChanged = true;
+        }
+
     }
 
     // Die Adresse des PCs, auf dem PC_Server läuft
@@ -91,6 +102,26 @@ public class CloudReceiver : MonoBehaviour
         }
 
         return new TaskResult(true, "OK");
+    }
+
+    private async Task StartAsyncReceiveLoop ()
+    {
+        TaskResult result;
+
+        do
+        {
+            var receiveMessageTask = Task.Run(ReceiveMessage);
+            receiveMessageTask.Wait();
+            result = receiveMessageTask.Result;
+            if (result.succeeded)
+            {
+                ChangeGuiText("Message from server: <" + result.message + ">");
+            }
+            else
+            {
+                ChangeGuiText("Error: " + result.message);
+            }
+        } while (result.succeeded);
     }
 
     private async Task<TaskResult> ReceiveMessage()
