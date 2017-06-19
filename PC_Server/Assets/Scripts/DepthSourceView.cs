@@ -39,6 +39,8 @@ public class DepthSourceView : MonoBehaviour
     private byte[] _recieveBuffer = new byte[32 * 1024 * 1024];
     private Text textInGui;
     private int messageCount = 0;
+    private System.Object readyToSendLock = new System.Object();
+    private bool readyToSendMesh = false;
 
     public Socket m_socListener, m_socWorker = null;
 
@@ -251,6 +253,22 @@ public class DepthSourceView : MonoBehaviour
         _Mesh.uv = _UV;
         _Mesh.triangles = _Triangles;
         _Mesh.RecalculateNormals();
+
+        bool sendMesh = false;
+        lock (readyToSendLock)
+        {
+            sendMesh = readyToSendMesh;
+        }
+        if (sendMesh)
+        {
+            messageCount++;
+            SendLineToClient("Test #" + messageCount);
+
+            lock (readyToSendLock)
+            {
+                readyToSendMesh = false;
+            }
+        }
     }
     
     private double GetAvg(ushort[] depthData, int x, int y, int width, int height)
@@ -314,9 +332,11 @@ public class DepthSourceView : MonoBehaviour
         var receivedString = System.Text.Encoding.Default.GetString(recData);
         textInGui.text = "Ready signal received from client, sending test data #" + messageCount + "...";
 
-        // Testdaten schicken
-        messageCount++;
-        SendLineToClient("Hello client #" + messageCount);
+        // Flag setzen, dass Mesh gesendet werden kann
+        lock(readyToSendLock)
+        {
+            readyToSendMesh = true;
+        }
 
         //Start receiving again
         m_socWorker.BeginReceive(_recieveBuffer, 0, _recieveBuffer.Length, SocketFlags.None, new AsyncCallback(ReceiveCallback), null);
