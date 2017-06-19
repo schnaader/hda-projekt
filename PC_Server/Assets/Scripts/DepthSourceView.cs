@@ -183,8 +183,10 @@ public class DepthSourceView : MonoBehaviour
         var frameDesc = _Sensor.DepthFrameSource.FrameDescription;
         
         ColorSpacePoint[] colorSpace = new ColorSpacePoint[depthData.Length];
+        CameraSpacePoint[] cameraSpace = new CameraSpacePoint[depthData.Length];
         _Mapper.MapDepthFrameToColorSpace(depthData, colorSpace);
-        
+        _Mapper.MapDepthFrameToCameraSpace(depthData, cameraSpace);
+
         for (int y = 0; y < frameDesc.Height; y += _DownsampleSize)
         {
             for (int x = 0; x < frameDesc.Width; x += _DownsampleSize)
@@ -192,15 +194,18 @@ public class DepthSourceView : MonoBehaviour
                 int indexX = x / _DownsampleSize;
                 int indexY = y / _DownsampleSize;
                 int smallIndex = (indexY * (frameDesc.Width / _DownsampleSize)) + indexX;
-                
+                int bigIndex = y * frameDesc.Width + x;
+
                 double avg = GetAvg(depthData, x, y, frameDesc.Width, frameDesc.Height);
                 
                 avg = avg * _DepthScale;
-                
-                _Vertices[smallIndex].z = (float)avg;
-                
+
+                _Vertices[smallIndex].x = cameraSpace[bigIndex].X;
+                _Vertices[smallIndex].y = cameraSpace[bigIndex].Y;
+                _Vertices[smallIndex].z = cameraSpace[bigIndex].Z;
+
                 // Update UV mapping with CDRP
-                var colorSpacePoint = colorSpace[(y * frameDesc.Width) + x];
+                var colorSpacePoint = colorSpace[bigIndex];
                 _UV[smallIndex] = new Vector2(colorSpacePoint.X / colorWidth, colorSpacePoint.Y / colorHeight);
             }
         }
