@@ -78,7 +78,8 @@ public class CloudReceiver : MonoBehaviour
     }
 
     // Die Adresse des PCs, auf dem PC_Server läuft
-    private string serverAdress = "172.17.25.227";
+    //private string serverAdress = "172.17.25.227";
+    private string serverAdress = "127.0.0.1";
 
     private async Task<TaskResult> SetupClient()
     {
@@ -124,9 +125,14 @@ public class CloudReceiver : MonoBehaviour
         } while (result.succeeded);
     }
 
+    StreamWriter writer;
+    BinaryReader reader;
+
     private async Task<TaskResult> ReceiveMessage()
     {
         string response = "no response";
+        int depthCount = 0;
+        int byteCount = 0;
 
         try
         {
@@ -134,15 +140,23 @@ public class CloudReceiver : MonoBehaviour
 
             //Write ready to the echo server.
             Stream streamOut = socket.OutputStream.AsStreamForWrite();
-            StreamWriter writer = new StreamWriter(streamOut);
+            writer = new StreamWriter(streamOut);
             string request = "Ready #" + readyCount;
             await writer.WriteLineAsync(request);
             await writer.FlushAsync();
 
             //Read data from the echo server.
             Stream streamIn = socket.InputStream.AsStreamForRead();
-            StreamReader reader = new StreamReader(streamIn);
-            response = await reader.ReadLineAsync();
+            reader = new BinaryReader(streamIn);
+            byte[] buf = new byte[sizeof(Int32)];
+            reader.Read(buf, 0, sizeof(Int32));
+            depthCount = BitConverter.ToInt32(buf, 0);
+
+            byteCount = 3 * sizeof(float) * depthCount;
+            buf = new byte[byteCount];
+            reader.Read(buf, 0, byteCount);
+
+            response = String.Format("{0} Bytes wurden empfangen", byteCount);
         } catch (Exception e)
         {
             return new TaskResult(false, e.Message);

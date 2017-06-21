@@ -6,6 +6,8 @@ using System.Net;
 using System.Net.Sockets;
 using Windows.Kinect;
 using System.Text;
+using System.Collections.Generic;
+using System.Linq;
 
 public enum DepthViewMode
 {
@@ -235,10 +237,6 @@ public class DepthSourceView : MonoBehaviour
                 int smallIndex = (indexY * (frameDesc.Width / _DownsampleSize)) + indexX;
                 int bigIndex = y * frameDesc.Width + x;
 
-                double avg = GetAvg(depthData, x, y, frameDesc.Width, frameDesc.Height);
-                
-                avg = avg * _DepthScale;
-
                 _Vertices[smallIndex].x = cameraSpace[bigIndex].X;
                 _Vertices[smallIndex].y = cameraSpace[bigIndex].Y;
                 _Vertices[smallIndex].z = cameraSpace[bigIndex].Z;
@@ -259,10 +257,27 @@ public class DepthSourceView : MonoBehaviour
         {
             sendMesh = readyToSendMesh;
         }
+
         if (sendMesh)
         {
-            messageCount++;
-            SendLineToClient("Test #" + messageCount);
+            var depthCount = depthData.Length;
+
+            // Anzahl der Punkte schicken
+            SendDataToClient(BitConverter.GetBytes(depthCount));
+
+            // Punktdaten sammeln und als einzelne Nachricht schicken
+            int byteCount = 3 * sizeof(float) * depthCount;
+            byte[] dataToSend = new byte[byteCount];
+            for (int i = 0; i < depthCount; i++)
+            {
+                Buffer.BlockCopy(BitConverter.GetBytes(cameraSpace[i].X), 0, dataToSend, i * 3 * sizeof(float), sizeof(float));
+                Buffer.BlockCopy(BitConverter.GetBytes(cameraSpace[i].Y), 0, dataToSend, i * 3 * sizeof(float) + sizeof(float), sizeof(float));
+                Buffer.BlockCopy(BitConverter.GetBytes(cameraSpace[i].Z), 0, dataToSend, i * 3 * sizeof(float) + 2 * sizeof(float), sizeof(float));
+            }
+
+            textInGui.text = String.Format("Sending {0} * {1} = {2} bytes...", 3, sizeof(float), dataToSend.Length);
+
+            SendDataToClient(dataToSend.ToArray());
 
             lock (readyToSendLock)
             {
@@ -330,6 +345,7 @@ public class DepthSourceView : MonoBehaviour
 
         //Process data here the way you want , all your bytes will be stored in recData
         var receivedString = System.Text.Encoding.Default.GetString(recData);
+        messageCount++;
         textInGui.text = "Ready signal received from client, sending test data #" + messageCount + "...";
 
         // Flag setzen, dass Mesh gesendet werden kann
