@@ -11,12 +11,17 @@ public class ColorSourceManager : MonoBehaviour
     private ColorFrameReader _Reader;
     private Texture2D _Texture;
     private byte[] _Data;
-    
+
     public Texture2D GetColorTexture()
     {
         return _Texture;
     }
-    
+
+    public byte[] GetData()
+    {
+        return _Data;
+    }
+
     void Start()
     {
         _Sensor = KinectSensor.GetDefault();

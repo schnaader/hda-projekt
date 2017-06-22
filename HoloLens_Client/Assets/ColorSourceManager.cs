@@ -7,7 +7,6 @@ public class ColorSourceManager : MonoBehaviour
     public int ColorHeight { get; private set; }
 
     private Texture2D _Texture;
-    private byte[] _Data;
     
     public Texture2D GetColorTexture()
     {
@@ -17,7 +16,6 @@ public class ColorSourceManager : MonoBehaviour
     void Start()
     {
             _Texture = new Texture2D(1920, 1080, TextureFormat.RGBA32, false);
-            _Data = new byte[4 * 1920 * 1080];
     }
     
     /*void Update () 

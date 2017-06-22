@@ -5,6 +5,7 @@ using System.Net;
 using System.Net.Sockets;
 using System.IO;
 using System.Collections.Generic;
+using System.Text;
 
 #if !UNITY_EDITOR
 using System.Threading;
@@ -37,6 +38,7 @@ public class CloudReceiver : MonoBehaviour
     private int readyCount = 0;
 
     private StreamSocket socket;
+    private Stream streamIn, streamOut;
     private bool guiTextChanged = false;
     private System.Object guiTextLock = new System.Object();
     private String guiText;
@@ -187,9 +189,6 @@ public class CloudReceiver : MonoBehaviour
         } while (result.succeeded);
     }
 
-    StreamWriter writer;
-    BinaryReader reader;
-
     private async Task<TaskResult> ReceiveMessage()
     {
         string response = "no response";
@@ -201,47 +200,55 @@ public class CloudReceiver : MonoBehaviour
             readyCount++;
 
             // Send ready to the server
-            Stream streamOut = socket.OutputStream.AsStreamForWrite();
-            writer = new StreamWriter(streamOut);
+            var streamOut = socket.OutputStream.AsStreamForWrite(0);
+            StreamWriter writer = new StreamWriter(streamOut);
             string request = "Ready #" + readyCount;
             await writer.WriteLineAsync(request);
             await writer.FlushAsync();
+            await streamOut.FlushAsync();
 
             // Read data from the server
-            Stream streamIn = socket.InputStream.AsStreamForRead();
-            reader = new BinaryReader(streamIn);
-            byte[] buf = reader.ReadBytes(sizeof(Int32));
-            width = BitConverter.ToInt32(buf, 0);
-            buf = reader.ReadBytes(sizeof(Int32));
-            height = BitConverter.ToInt32(buf, 0);
- 
-            byteCount = 3 * sizeof(float) * width * height;
-            buf = reader.ReadBytes(byteCount);
-
-            lock (meshChangeLock)
+            var streamIn = socket.InputStream.AsStreamForRead(0);
             {
-
-                int bufIndex = 0;
-                for (int y = 0; y < height; y++)
+                using (BinaryReader reader = new BinaryReader(streamIn, Encoding.Unicode, true))
                 {
-                    for (int x = 0; x < width; x++)
-                    {
-                        int verticesIndex = y * 256 + x;
+                    byte[] buf = reader.ReadBytes(sizeof(Int32));
+                    width = BitConverter.ToInt32(buf, 0);
+                    buf = reader.ReadBytes(sizeof(Int32));
+                    height = BitConverter.ToInt32(buf, 0);
 
-                        _Vertices[verticesIndex].x = BitConverter.ToSingle(buf, bufIndex);
-                        bufIndex += sizeof(float);
-                        _Vertices[verticesIndex].y = BitConverter.ToSingle(buf, bufIndex);
-                        bufIndex += sizeof(float);
-                        _Vertices[verticesIndex].z = BitConverter.ToSingle(buf, bufIndex);
-                        bufIndex += sizeof(float);
+                    byteCount = 3 * sizeof(float) * width * height;
+                    buf = reader.ReadBytes(byteCount);
+
+                    lock (meshChangeLock)
+                    {
+                        int bufIndex = 0;
+                        for (int y = 0; y < height; y++)
+                        {
+                            for (int x = 0; x < width; x++)
+                            {
+                                int verticesIndex = y * 256 + x;
+
+                                _Vertices[verticesIndex].x = BitConverter.ToSingle(buf, bufIndex);
+                                bufIndex += sizeof(float);
+                                _Vertices[verticesIndex].y = BitConverter.ToSingle(buf, bufIndex);
+                                bufIndex += sizeof(float);
+                                _Vertices[verticesIndex].z = BitConverter.ToSingle(buf, bufIndex);
+                                bufIndex += sizeof(float);
+                            }
+                        }
                     }
+                    var colorBuf = reader.ReadBytes(1920 * 1080 * 4);
+
+                    meshChanged = true;
                 }
+
+                await streamIn.FlushAsync();
             }
 
-            meshChanged = true;
-
             response = String.Format("{0} Bytes wurden empfangen", byteCount);
-        } catch (Exception e)
+        }
+        catch (Exception e)
         {
             return new TaskResult(false, e.Message);
         }

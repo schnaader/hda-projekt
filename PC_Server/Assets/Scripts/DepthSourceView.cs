@@ -29,6 +29,7 @@ public class DepthSourceView : MonoBehaviour
     private Vector3[] _Vertices;
     private Vector2[] _UV;
     private int[] _Triangles;
+    private byte[] colorData;
     
     private const int _DownsampleSize = 2;
     private const double _DepthScale = 0.1f;
@@ -194,6 +195,8 @@ public class DepthSourceView : MonoBehaviour
             }
             
             gameObject.GetComponent<Renderer>().material.mainTexture = _ColorManager.GetColorTexture();
+            colorData = _ColorManager.GetData();
+
             RefreshData(_DepthManager.GetData(),
                 _ColorManager.ColorWidth,
                 _ColorManager.ColorHeight);
@@ -212,7 +215,8 @@ public class DepthSourceView : MonoBehaviour
             }
             
             gameObject.GetComponent<Renderer>().material.mainTexture = _MultiManager.GetColorTexture();
-            
+            colorData = _MultiManager.GetColorData();
+
             RefreshData(_MultiManager.GetDepthData(),
                         _MultiManager.ColorWidth,
                         _MultiManager.ColorHeight);
@@ -264,7 +268,7 @@ public class DepthSourceView : MonoBehaviour
             var depthHeight = frameDesc.Height / _DownsampleSize;
             var depthCount = depthWidth * depthHeight;
 
-            // Breite und Höhe schicken
+            // Breite und Höhe Tiefendaten schicken
             SendDataToClient(BitConverter.GetBytes(depthWidth));
             SendDataToClient(BitConverter.GetBytes(depthHeight));
 
@@ -280,6 +284,9 @@ public class DepthSourceView : MonoBehaviour
 
             SendDataToClient(dataToSend.ToArray());
 
+            // Farbdaten als einzelne Nachricht schicken
+            SendDataToClient(colorData);
+
             lock (readyToSendLock)
             {
                 readyToSendMesh = false;
@@ -287,27 +294,6 @@ public class DepthSourceView : MonoBehaviour
         }
     }
     
-    private double GetAvg(ushort[] depthData, int x, int y, int width, int height)
-    {
-        double sum = 0.0;
-        
-        for (int y1 = y; y1 < y + _DownsampleSize; y1++)
-        {
-            for (int x1 = x; x1 < x + _DownsampleSize; x1++)
-            {
-                int fullIndex = (y1 * width) + x1;
-                
-                if (depthData[fullIndex] == 0)
-                    sum += 4500;
-                else
-                    sum += depthData[fullIndex];
-                
-            }
-        }
-
-        return sum / (_DownsampleSize * _DownsampleSize);
-    }
-
     byte[] m_DataBuffer = new byte[32 * 1024 * 1024];
 
     public void OnClientConnect(IAsyncResult asyn)

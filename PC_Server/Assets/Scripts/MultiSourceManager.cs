@@ -22,6 +22,11 @@ public class MultiSourceManager : MonoBehaviour {
         return _DepthData;
     }
 
+    public byte[] GetColorData()
+    {
+        return _ColorData;
+    }
+
     void Start () 
     {
         _Sensor = KinectSensor.GetDefault();
