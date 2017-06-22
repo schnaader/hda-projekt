@@ -26,6 +26,8 @@ public class TaskResult
 
 public class CloudReceiver : MonoBehaviour
 {
+
+#if !UNITY_EDITOR
     private Mesh _Mesh;
     private Vector3[] _Vertices;
     private Vector2[] _UV;
@@ -34,16 +36,20 @@ public class CloudReceiver : MonoBehaviour
     private Text textInGui;
     private int readyCount = 0;
 
-#if !UNITY_EDITOR
     private StreamSocket socket;
     private bool guiTextChanged = false;
     private System.Object guiTextLock = new System.Object();
     private String guiText;
 
+    private bool meshChanged = true;
+    private System.Object meshChangeLock = new System.Object();
+
+    const int depthWidth = 256, depthHeight = 212;
+
     // Use this for initialization
     void Start()
     {
-        CreateMesh(256, 212);
+        CreateMesh(depthWidth, depthHeight);
 
         textInGui = GameObject.FindObjectOfType<Text>();
 
@@ -109,6 +115,14 @@ public class CloudReceiver : MonoBehaviour
                 guiTextChanged = false;
             }
 
+            if (meshChanged)
+            {
+                _Mesh.vertices = _Vertices;
+                _Mesh.uv = _UV;
+                _Mesh.triangles = _Triangles;
+                _Mesh.RecalculateNormals();
+                meshChanged = false;
+            }
         }
     }
 
@@ -120,6 +134,14 @@ public class CloudReceiver : MonoBehaviour
             guiTextChanged = true;
         }
 
+    }
+
+    private void ChangeMesh()
+    {
+        lock(meshChangeLock)
+        {
+            meshChanged = true;
+        }
     }
 
     // Die Adresse des PCs, auf dem PC_Server läuft
@@ -200,6 +222,25 @@ public class CloudReceiver : MonoBehaviour
             byteCount = 3 * sizeof(float) * depthCount;
             buf = new byte[byteCount];
             reader.Read(buf, 0, byteCount);
+
+            int bufIndex = 0;
+            for (int y = 0; y < depthHeight; y++)
+            {
+                for (int x = 0; x < depthWidth; x++)
+                {
+                    int verticesIndex = y * 256 + x;
+
+                    _Vertices[verticesIndex].x = BitConverter.ToSingle(buf, bufIndex);
+                    bufIndex += sizeof(float);
+                    _Vertices[verticesIndex].y = BitConverter.ToSingle(buf, bufIndex);
+                    bufIndex += sizeof(float);
+                    _Vertices[verticesIndex].z = BitConverter.ToSingle(buf, bufIndex);
+                    bufIndex += sizeof(float);
+
+                }
+            }
+
+            meshChanged = true;
 
             response = String.Format("{0} Bytes wurden empfangen", byteCount);
         } catch (Exception e)

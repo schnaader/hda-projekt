@@ -271,8 +271,8 @@ public class DepthSourceView : MonoBehaviour
             for (int i = 0; i < depthCount; i++)
             {
                 Buffer.BlockCopy(BitConverter.GetBytes(cameraSpace[i].X), 0, dataToSend, i * 3 * sizeof(float), sizeof(float));
-                Buffer.BlockCopy(BitConverter.GetBytes(cameraSpace[i].Y), 0, dataToSend, i * 3 * sizeof(float) + sizeof(float), sizeof(float));
-                Buffer.BlockCopy(BitConverter.GetBytes(cameraSpace[i].Z), 0, dataToSend, i * 3 * sizeof(float) + 2 * sizeof(float), sizeof(float));
+                Buffer.BlockCopy(BitConverter.GetBytes(cameraSpace[i].Y), 0, dataToSend, (i * 3 + 1) * sizeof(float), sizeof(float));
+                Buffer.BlockCopy(BitConverter.GetBytes(cameraSpace[i].Z), 0, dataToSend, (i * 3 + 2) * sizeof(float), sizeof(float));
             }
 
             textInGui.text = String.Format("Sending {0} * {1} = {2} bytes...", 3, sizeof(float), dataToSend.Length);
