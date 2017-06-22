@@ -38,7 +38,6 @@ public class CloudReceiver : MonoBehaviour
     private int readyCount = 0;
 
     private StreamSocket socket;
-    private Stream streamIn, streamOut;
     private bool guiTextChanged = false;
     private System.Object guiTextLock = new System.Object();
     private String guiText;
@@ -239,11 +238,11 @@ public class CloudReceiver : MonoBehaviour
                         }
                     }
                     var colorBuf = reader.ReadBytes(1920 * 1080 * 4);
-
+                    
                     meshChanged = true;
                 }
 
-                await streamIn.FlushAsync();
+                streamIn.Flush();
             }
 
             response = String.Format("{0} Bytes wurden empfangen", byteCount);
