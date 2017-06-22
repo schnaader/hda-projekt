@@ -41,7 +41,7 @@ public class CloudReceiver : MonoBehaviour
     private System.Object guiTextLock = new System.Object();
     private String guiText;
 
-    private bool meshChanged = true;
+    private bool meshChanged = false;
     private System.Object meshChangeLock = new System.Object();
 
     const int depthWidth = 256, depthHeight = 212;
@@ -107,20 +107,23 @@ public class CloudReceiver : MonoBehaviour
 
     private void Update()
     {
-        lock(guiTextLock)
+        lock (guiTextLock)
         {
             if (guiTextChanged)
             {
                 textInGui.text = guiText;
                 guiTextChanged = false;
             }
+        }
 
+        lock (meshChangeLock) {
             if (meshChanged)
             {
                 _Mesh.vertices = _Vertices;
                 _Mesh.uv = _UV;
                 _Mesh.triangles = _Triangles;
                 _Mesh.RecalculateNormals();
+
                 meshChanged = false;
             }
         }
@@ -134,14 +137,6 @@ public class CloudReceiver : MonoBehaviour
             guiTextChanged = true;
         }
 
-    }
-
-    private void ChangeMesh()
-    {
-        lock(meshChangeLock)
-        {
-            meshChanged = true;
-        }
     }
 
     // Die Adresse des PCs, auf dem PC_Server läuft
@@ -198,45 +193,48 @@ public class CloudReceiver : MonoBehaviour
     private async Task<TaskResult> ReceiveMessage()
     {
         string response = "no response";
-        int depthCount = 0;
         int byteCount = 0;
+        int width = 0, height = 0;
 
         try
         {
             readyCount++;
 
-            //Write ready to the echo server.
+            // Send ready to the server
             Stream streamOut = socket.OutputStream.AsStreamForWrite();
             writer = new StreamWriter(streamOut);
             string request = "Ready #" + readyCount;
             await writer.WriteLineAsync(request);
             await writer.FlushAsync();
 
-            //Read data from the echo server.
+            // Read data from the server
             Stream streamIn = socket.InputStream.AsStreamForRead();
             reader = new BinaryReader(streamIn);
-            byte[] buf = new byte[sizeof(Int32)];
-            reader.Read(buf, 0, sizeof(Int32));
-            depthCount = BitConverter.ToInt32(buf, 0);
+            byte[] buf = reader.ReadBytes(sizeof(Int32));
+            width = BitConverter.ToInt32(buf, 0);
+            buf = reader.ReadBytes(sizeof(Int32));
+            height = BitConverter.ToInt32(buf, 0);
+ 
+            byteCount = 3 * sizeof(float) * width * height;
+            buf = reader.ReadBytes(byteCount);
 
-            byteCount = 3 * sizeof(float) * depthCount;
-            buf = new byte[byteCount];
-            reader.Read(buf, 0, byteCount);
-
-            int bufIndex = 0;
-            for (int y = 0; y < depthHeight; y++)
+            lock (meshChangeLock)
             {
-                for (int x = 0; x < depthWidth; x++)
+
+                int bufIndex = 0;
+                for (int y = 0; y < height; y++)
                 {
-                    int verticesIndex = y * 256 + x;
+                    for (int x = 0; x < width; x++)
+                    {
+                        int verticesIndex = y * 256 + x;
 
-                    _Vertices[verticesIndex].x = BitConverter.ToSingle(buf, bufIndex);
-                    bufIndex += sizeof(float);
-                    _Vertices[verticesIndex].y = BitConverter.ToSingle(buf, bufIndex);
-                    bufIndex += sizeof(float);
-                    _Vertices[verticesIndex].z = BitConverter.ToSingle(buf, bufIndex);
-                    bufIndex += sizeof(float);
-
+                        _Vertices[verticesIndex].x = BitConverter.ToSingle(buf, bufIndex);
+                        bufIndex += sizeof(float);
+                        _Vertices[verticesIndex].y = BitConverter.ToSingle(buf, bufIndex);
+                        bufIndex += sizeof(float);
+                        _Vertices[verticesIndex].z = BitConverter.ToSingle(buf, bufIndex);
+                        bufIndex += sizeof(float);
+                    }
                 }
             }
 

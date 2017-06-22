@@ -260,10 +260,13 @@ public class DepthSourceView : MonoBehaviour
 
         if (sendMesh)
         {
-            var depthCount = depthData.Length;
+            var depthWidth = frameDesc.Width / _DownsampleSize;
+            var depthHeight = frameDesc.Height / _DownsampleSize;
+            var depthCount = depthWidth * depthHeight;
 
-            // Anzahl der Punkte schicken
-            SendDataToClient(BitConverter.GetBytes(depthCount));
+            // Breite und Höhe schicken
+            SendDataToClient(BitConverter.GetBytes(depthWidth));
+            SendDataToClient(BitConverter.GetBytes(depthHeight));
 
             // Punktdaten sammeln und als einzelne Nachricht schicken
             int byteCount = 3 * sizeof(float) * depthCount;
@@ -274,8 +277,6 @@ public class DepthSourceView : MonoBehaviour
                 Buffer.BlockCopy(BitConverter.GetBytes(cameraSpace[i].Y), 0, dataToSend, (i * 3 + 1) * sizeof(float), sizeof(float));
                 Buffer.BlockCopy(BitConverter.GetBytes(cameraSpace[i].Z), 0, dataToSend, (i * 3 + 2) * sizeof(float), sizeof(float));
             }
-
-            textInGui.text = String.Format("Sending {0} * {1} = {2} bytes...", 3, sizeof(float), dataToSend.Length);
 
             SendDataToClient(dataToSend.ToArray());
 
