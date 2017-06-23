@@ -284,7 +284,9 @@ public class DepthSourceView : MonoBehaviour
             SendDataToClient(dataToSend.ToArray());
 
             // Farbdaten als einzelne Nachricht schicken
-            SendDataToClient(colorData);
+            byte[] colorDataCopy = new byte[colorData.Length];
+            Buffer.BlockCopy(colorData, 0, colorDataCopy, 0, colorData.Length);
+            SendDataToClient(colorDataCopy);
 
             lock (readyToSendLock)
             {

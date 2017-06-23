@@ -209,7 +209,6 @@ public class CloudReceiver : MonoBehaviour
         string response = "no response";
         int byteCount = 0;
         int width = 0, height = 0;
-        string debugString = "";
 
         try
         {
@@ -228,28 +227,19 @@ public class CloudReceiver : MonoBehaviour
             {
                 using (BinaryReader reader = new BinaryReader(streamIn, Encoding.Unicode, true))
                 {
-                    debugString = "Stage 1";
                     byte[] buf = reader.ReadBytes(sizeof(Int32));
-                    debugString = "Stage 2";
                     width = BitConverter.ToInt32(buf, 0);
-                    debugString = "Stage 3";
                     buf = reader.ReadBytes(sizeof(Int32));
-                    debugString = "Stage 4";
                     height = BitConverter.ToInt32(buf, 0);
 
-                    debugString = "Stage 5";
                     byteCount = 3 * sizeof(float) * width * height;
-                    debugString = "Stage 6";
                     buf = reader.ReadBytes(byteCount);
 
                     lock (meshChangeLock)
                     {
-                        debugString = "Stage 7";
                         int bufIndex = 0;
-                        debugString = "Stage 8";
                         for (int y = 0; y < height; y++)
                         {
-                            debugString = "Stage 8 - verticesIndex = " + y * width + " - bufIndex = " + bufIndex;
                             for (int x = 0; x < width; x++)
                             {
                                 int verticesIndex = y * width + x;
@@ -262,26 +252,21 @@ public class CloudReceiver : MonoBehaviour
                                 bufIndex += sizeof(float);
                             }
                         }
-                        debugString = "Stage 9";
                     }
-                    debugString = "Stage 10";
                     colorBuf = reader.ReadBytes(1920 * 1080 * 4);
 
-                    debugString = "Stage 11";
 
                     meshChanged = true;
                 }
 
-                debugString = "Stage 12";
                 streamIn.Flush();
             }
 
-            debugString = "Stage 13";
             response = String.Format("{0} Bytes wurden empfangen", byteCount);
         }
         catch (Exception e)
         {
-            return new TaskResult(false, debugString + e.Message);
+            return new TaskResult(false, e.Message);
         }
 
         return new TaskResult(true, response);
