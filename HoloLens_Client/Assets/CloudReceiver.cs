@@ -45,14 +45,26 @@ public class CloudReceiver : MonoBehaviour
     private bool meshChanged = false;
     private System.Object meshChangeLock = new System.Object();
 
+    private Material colorViewMaterial;
+    private Texture2D colorTexture;
+    private byte[] colorBuf;
+
     const int depthWidth = 256, depthHeight = 212;
 
     // Use this for initialization
     void Start()
     {
         CreateMesh(depthWidth, depthHeight);
+        colorTexture = new Texture2D(1920, 1080, TextureFormat.RGBA32, false);
 
         textInGui = GameObject.FindObjectOfType<Text>();
+
+        colorViewMaterial = GameObject.Find("ColorView").GetComponent<Renderer>().material;
+        if (colorViewMaterial == null)
+        {
+            textInGui.text = "Could not find ColorView, renderer or material";
+            return;
+        }
 
         var setupClientTask = Task.Run(SetupClient);
         setupClientTask.Wait();
@@ -125,6 +137,10 @@ public class CloudReceiver : MonoBehaviour
                 _Mesh.triangles = _Triangles;
                 _Mesh.RecalculateNormals();
 
+                colorTexture.LoadRawTextureData(colorBuf);
+                colorTexture.Apply();
+                colorViewMaterial.mainTexture = colorTexture;
+
                 meshChanged = false;
             }
         }
@@ -141,8 +157,8 @@ public class CloudReceiver : MonoBehaviour
     }
 
     // Die Adresse des PCs, auf dem PC_Server läuft
-    //private string serverAdress = "172.17.25.227";
-    private string serverAdress = "127.0.0.1";
+    private string serverAdress = "172.17.27.125";
+    //private string serverAdress = "127.0.0.1";
 
     private async Task<TaskResult> SetupClient()
     {
@@ -193,6 +209,7 @@ public class CloudReceiver : MonoBehaviour
         string response = "no response";
         int byteCount = 0;
         int width = 0, height = 0;
+        string debugString = "";
 
         try
         {
@@ -211,22 +228,31 @@ public class CloudReceiver : MonoBehaviour
             {
                 using (BinaryReader reader = new BinaryReader(streamIn, Encoding.Unicode, true))
                 {
+                    debugString = "Stage 1";
                     byte[] buf = reader.ReadBytes(sizeof(Int32));
+                    debugString = "Stage 2";
                     width = BitConverter.ToInt32(buf, 0);
+                    debugString = "Stage 3";
                     buf = reader.ReadBytes(sizeof(Int32));
+                    debugString = "Stage 4";
                     height = BitConverter.ToInt32(buf, 0);
 
+                    debugString = "Stage 5";
                     byteCount = 3 * sizeof(float) * width * height;
+                    debugString = "Stage 6";
                     buf = reader.ReadBytes(byteCount);
 
                     lock (meshChangeLock)
                     {
+                        debugString = "Stage 7";
                         int bufIndex = 0;
+                        debugString = "Stage 8";
                         for (int y = 0; y < height; y++)
                         {
+                            debugString = "Stage 8 - verticesIndex = " + y * width + " - bufIndex = " + bufIndex;
                             for (int x = 0; x < width; x++)
                             {
-                                int verticesIndex = y * 256 + x;
+                                int verticesIndex = y * width + x;
 
                                 _Vertices[verticesIndex].x = BitConverter.ToSingle(buf, bufIndex);
                                 bufIndex += sizeof(float);
@@ -236,20 +262,26 @@ public class CloudReceiver : MonoBehaviour
                                 bufIndex += sizeof(float);
                             }
                         }
+                        debugString = "Stage 9";
                     }
-                    var colorBuf = reader.ReadBytes(1920 * 1080 * 4);
-                    
+                    debugString = "Stage 10";
+                    colorBuf = reader.ReadBytes(1920 * 1080 * 4);
+
+                    debugString = "Stage 11";
+
                     meshChanged = true;
                 }
 
+                debugString = "Stage 12";
                 streamIn.Flush();
             }
 
+            debugString = "Stage 13";
             response = String.Format("{0} Bytes wurden empfangen", byteCount);
         }
         catch (Exception e)
         {
-            return new TaskResult(false, e.Message);
+            return new TaskResult(false, debugString + e.Message);
         }
 
         return new TaskResult(true, response);
