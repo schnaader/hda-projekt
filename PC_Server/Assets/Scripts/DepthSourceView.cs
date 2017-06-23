@@ -276,9 +276,15 @@ public class DepthSourceView : MonoBehaviour
             byte[] dataToSend = new byte[byteCount];
             for (int i = 0; i < depthCount; i++)
             {
-                Buffer.BlockCopy(BitConverter.GetBytes(cameraSpace[i].X), 0, dataToSend, i * 3 * sizeof(float), sizeof(float));
-                Buffer.BlockCopy(BitConverter.GetBytes(cameraSpace[i].Y), 0, dataToSend, (i * 3 + 1) * sizeof(float), sizeof(float));
-                Buffer.BlockCopy(BitConverter.GetBytes(cameraSpace[i].Z), 0, dataToSend, (i * 3 + 2) * sizeof(float), sizeof(float));
+                // smallIndex -> x, y
+                int x = i % depthWidth;
+                int y = i / depthWidth;
+                // x, y -> bigIndex
+                int bigIndex = y * depthWidth * _DownsampleSize + x * _DownsampleSize;
+
+                Buffer.BlockCopy(BitConverter.GetBytes(cameraSpace[bigIndex].X), 0, dataToSend, i * 3 * sizeof(float), sizeof(float));
+                Buffer.BlockCopy(BitConverter.GetBytes(cameraSpace[bigIndex].Y), 0, dataToSend, (i * 3 + 1) * sizeof(float), sizeof(float));
+                Buffer.BlockCopy(BitConverter.GetBytes(cameraSpace[bigIndex].Z), 0, dataToSend, (i * 3 + 2) * sizeof(float), sizeof(float));
             }
 
             SendDataToClient(dataToSend.ToArray());
