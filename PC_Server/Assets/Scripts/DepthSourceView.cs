@@ -31,7 +31,7 @@ public class DepthSourceView : MonoBehaviour
     private int[] _Triangles;
     private byte[] colorData;
     
-    private const int _DownsampleSize = 4;
+    private const int _DownsampleSize = 2;
     private const int _Speed = 50;
     
     private MultiSourceManager _MultiManager;
