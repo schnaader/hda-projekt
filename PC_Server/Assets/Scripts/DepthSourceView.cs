@@ -271,8 +271,9 @@ public class DepthSourceView : MonoBehaviour
             SendDataToClient(BitConverter.GetBytes(depthWidth));
             SendDataToClient(BitConverter.GetBytes(depthHeight));
 
-            // Punktdaten sammeln und als einzelne Nachricht schicken
-            int byteCount = 3 * sizeof(float) * depthCount;
+            // Punktdaten und UV-Daten sammeln und als einzelne Nachricht schicken
+            // 5 Floats (X, Y, Z, U, V)
+            int byteCount = 5 * sizeof(float) * depthCount;
             byte[] dataToSend = new byte[byteCount];
             for (int i = 0; i < depthCount; i++)
             {
@@ -282,9 +283,11 @@ public class DepthSourceView : MonoBehaviour
                 // x, y -> bigIndex
                 int bigIndex = y * depthWidth * _DownsampleSize + x * _DownsampleSize;
 
-                Buffer.BlockCopy(BitConverter.GetBytes(cameraSpace[bigIndex].X), 0, dataToSend, i * 3 * sizeof(float), sizeof(float));
-                Buffer.BlockCopy(BitConverter.GetBytes(cameraSpace[bigIndex].Y), 0, dataToSend, (i * 3 + 1) * sizeof(float), sizeof(float));
-                Buffer.BlockCopy(BitConverter.GetBytes(cameraSpace[bigIndex].Z), 0, dataToSend, (i * 3 + 2) * sizeof(float), sizeof(float));
+                Buffer.BlockCopy(BitConverter.GetBytes(cameraSpace[bigIndex].X), 0, dataToSend, i * 5 * sizeof(float), sizeof(float));
+                Buffer.BlockCopy(BitConverter.GetBytes(cameraSpace[bigIndex].Y), 0, dataToSend, (i * 5 + 1) * sizeof(float), sizeof(float));
+                Buffer.BlockCopy(BitConverter.GetBytes(cameraSpace[bigIndex].Z), 0, dataToSend, (i * 5 + 2) * sizeof(float), sizeof(float));
+                Buffer.BlockCopy(BitConverter.GetBytes(colorSpace[bigIndex].X), 0, dataToSend, (i * 5 + 3) * sizeof(float), sizeof(float));
+                Buffer.BlockCopy(BitConverter.GetBytes(colorSpace[bigIndex].Y), 0, dataToSend, (i * 5 + 4) * sizeof(float), sizeof(float));
             }
 
             SendDataToClient(dataToSend.ToArray());

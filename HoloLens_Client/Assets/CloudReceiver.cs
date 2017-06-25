@@ -232,7 +232,7 @@ public class CloudReceiver : MonoBehaviour
                     buf = reader.ReadBytes(sizeof(Int32));
                     height = BitConverter.ToInt32(buf, 0);
 
-                    byteCount = 3 * sizeof(float) * width * height;
+                    byteCount = 5 * sizeof(float) * width * height;
                     buf = reader.ReadBytes(byteCount);
 
                     lock (meshChangeLock)
@@ -242,13 +242,17 @@ public class CloudReceiver : MonoBehaviour
                         {
                             for (int x = 0; x < width; x++)
                             {
-                                int verticesIndex = y * width + x;
+                                int index = y * width + x;
 
-                                _Vertices[verticesIndex].x = BitConverter.ToSingle(buf, bufIndex);
+                                _Vertices[index].x = BitConverter.ToSingle(buf, bufIndex);
                                 bufIndex += sizeof(float);
-                                _Vertices[verticesIndex].y = BitConverter.ToSingle(buf, bufIndex);
+                                _Vertices[index].y = BitConverter.ToSingle(buf, bufIndex);
                                 bufIndex += sizeof(float);
-                                _Vertices[verticesIndex].z = BitConverter.ToSingle(buf, bufIndex);
+                                _Vertices[index].z = BitConverter.ToSingle(buf, bufIndex);
+                                bufIndex += sizeof(float);
+                                _UV[index].x = BitConverter.ToSingle(buf, bufIndex);
+                                bufIndex += sizeof(float);
+                                _UV[index].y = BitConverter.ToSingle(buf, bufIndex);
                                 bufIndex += sizeof(float);
                             }
                         }
