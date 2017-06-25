@@ -46,6 +46,7 @@ public class CloudReceiver : MonoBehaviour
     private System.Object meshChangeLock = new System.Object();
 
     private Material colorViewMaterial;
+    private Material meshMaterial;
     private Texture2D colorTexture;
     private byte[] colorBuf;
 
@@ -60,9 +61,10 @@ public class CloudReceiver : MonoBehaviour
         textInGui = GameObject.FindObjectOfType<Text>();
 
         colorViewMaterial = GameObject.Find("ColorView").GetComponent<Renderer>().material;
-        if (colorViewMaterial == null)
+        meshMaterial = GameObject.Find("Mesh").GetComponent<Renderer>().material;
+        if ((colorViewMaterial == null) || (meshMaterial == null))
         {
-            textInGui.text = "Could not find ColorView, renderer or material";
+            textInGui.text = "Could not find ColorView, Mesh, renderer or material";
             return;
         }
 
@@ -140,6 +142,7 @@ public class CloudReceiver : MonoBehaviour
                 colorTexture.LoadRawTextureData(colorBuf);
                 colorTexture.Apply();
                 colorViewMaterial.mainTexture = colorTexture;
+                meshMaterial.mainTexture = colorTexture;
 
                 meshChanged = false;
             }
