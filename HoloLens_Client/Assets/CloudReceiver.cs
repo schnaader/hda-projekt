@@ -48,7 +48,7 @@ public class CloudReceiver : MonoBehaviour
     private Material colorViewMaterial;
     private Material meshMaterial;
     private Texture2D colorTexture;
-    private byte[] colorBuf;
+    private byte[] jpgBuf;
 
     const int depthWidth = 256, depthHeight = 212;
 
@@ -139,8 +139,7 @@ public class CloudReceiver : MonoBehaviour
                 _Mesh.triangles = _Triangles;
                 _Mesh.RecalculateNormals();
 
-                colorTexture.LoadRawTextureData(colorBuf);
-                colorTexture.Apply();
+                colorTexture.LoadImage(jpgBuf);
                 colorViewMaterial.mainTexture = colorTexture;
                 meshMaterial.mainTexture = colorTexture;
 
@@ -160,7 +159,7 @@ public class CloudReceiver : MonoBehaviour
     }
 
     // Die Adresse des PCs, auf dem PC_Server läuft
-    private string serverAdress = "172.17.27.125";
+    private string serverAdress = "172.17.5.235";
     //private string serverAdress = "127.0.0.1";
 
     private async Task<TaskResult> SetupClient()
@@ -210,7 +209,7 @@ public class CloudReceiver : MonoBehaviour
     private async Task<TaskResult> ReceiveMessage()
     {
         string response = "no response";
-        int byteCount = 0;
+        int byteCount = 0, jpgLength = 0;
         int width = 0, height = 0;
 
         try
@@ -260,8 +259,10 @@ public class CloudReceiver : MonoBehaviour
                             }
                         }
                     }
-                    colorBuf = reader.ReadBytes(1920 * 1080 * 4);
 
+                    buf = reader.ReadBytes(sizeof(Int32));
+                    jpgLength = BitConverter.ToInt32(buf, 0);
+                    jpgBuf = reader.ReadBytes(jpgLength);
 
                     meshChanged = true;
                 }
@@ -269,7 +270,7 @@ public class CloudReceiver : MonoBehaviour
                 streamIn.Flush();
             }
 
-            response = String.Format("{0} Bytes wurden empfangen", byteCount);
+            response = String.Format("{0} Bytes wurden empfangen", byteCount + jpgLength);
         }
         catch (Exception e)
         {

@@ -8,6 +8,10 @@ using Windows.Kinect;
 using System.Text;
 using System.Collections.Generic;
 using System.Linq;
+using System.Drawing;
+using System.IO;
+using System.Drawing.Imaging;
+using System.Runtime.InteropServices;
 
 public enum DepthViewMode
 {
@@ -286,14 +290,39 @@ public class DepthSourceView : MonoBehaviour
 
             SendDataToClient(dataToSend.ToArray());
 
-            // Farbdaten als einzelne Nachricht schicken
+            // Farbdaten mittels JPG komprimieren und als einzelne Nachricht schicken
             byte[] colorDataCopy = new byte[colorData.Length];
+            byte[] jpgData;
             Buffer.BlockCopy(colorData, 0, colorDataCopy, 0, colorData.Length);
-            SendDataToClient(colorDataCopy);
 
-            lock (readyToSendLock)
+            try
             {
-                readyToSendMesh = false;
+                // source: https://stackoverflow.com/questions/11730373/byte-array-to-bitmap-image
+                // doesn't seem to work yet
+                Bitmap bitmap = new Bitmap(1920, 1080, System.Drawing.Imaging.PixelFormat.Format32bppRgb);
+                BitmapData bmData = bitmap.LockBits(new Rectangle(0, 0, 1920, 1080), ImageLockMode.ReadWrite, bitmap.PixelFormat);
+                Marshal.Copy(colorDataCopy, 0, bmData.Scan0, 1920 * 1080 * 4);
+                bitmap.UnlockBits(bmData);
+
+                using (var ms = new MemoryStream())
+                {
+                    bitmap.Save(ms, ImageFormat.Jpeg);
+                    jpgData = ms.ToArray();
+
+                    textInGui.text = "JPG length: " + jpgData.Length;
+
+                    // Länge der Daten schicken
+                    SendDataToClient(BitConverter.GetBytes(jpgData.Length));
+                    SendDataToClient(jpgData);
+                }
+
+                lock (readyToSendLock)
+                {
+                    readyToSendMesh = false;
+                }
+            } catch (Exception e)
+            {
+                textInGui.text = e.Message;
             }
         }
     }
@@ -337,7 +366,7 @@ public class DepthSourceView : MonoBehaviour
         //Process data here the way you want , all your bytes will be stored in recData
         var receivedString = System.Text.Encoding.Default.GetString(recData);
         messageCount++;
-        textInGui.text = "Ready signal received from client, sending test data #" + messageCount + "...";
+        //textInGui.text = "Ready signal received from client, sending test data #" + messageCount + "...";
 
         // Flag setzen, dass Mesh gesendet werden kann
         lock(readyToSendLock)
