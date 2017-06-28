@@ -142,6 +142,8 @@ public class CloudReceiver : MonoBehaviour
                 colorTexture.LoadImage(jpgBuf);
                 colorViewMaterial.mainTexture = colorTexture;
                 meshMaterial.mainTexture = colorTexture;
+                colorViewMaterial.mainTextureScale = new Vector2(1, -1);
+                meshMaterial.mainTextureScale = new Vector2(1, -1);
 
                 meshChanged = false;
             }
