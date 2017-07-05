@@ -103,11 +103,12 @@ public class DepthSourceView : MonoBehaviour
                     int bottomRight = bottomLeft + 1;
 
                     _Triangles[triangleIndex++] = topLeft;
-                    _Triangles[triangleIndex++] = topRight;
-                    _Triangles[triangleIndex++] = bottomLeft;
                     _Triangles[triangleIndex++] = bottomLeft;
                     _Triangles[triangleIndex++] = topRight;
+
+                    _Triangles[triangleIndex++] = bottomLeft;
                     _Triangles[triangleIndex++] = bottomRight;
+                    _Triangles[triangleIndex++] = topRight;
                 }
             }
         }
@@ -247,7 +248,7 @@ public class DepthSourceView : MonoBehaviour
                 int smallIndex = (indexY * (frameDesc.Width / _DownsampleSize)) + indexX;
                 int bigIndex = y * frameDesc.Width + x;
 
-                _Vertices[smallIndex].x = cameraSpace[bigIndex].X;
+                _Vertices[smallIndex].x = -cameraSpace[bigIndex].X;
                 _Vertices[smallIndex].y = cameraSpace[bigIndex].Y;
                 _Vertices[smallIndex].z = cameraSpace[bigIndex].Z;
 
