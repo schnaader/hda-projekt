@@ -37,7 +37,10 @@ public class DepthSourceView : MonoBehaviour
     
     private const int _DownsampleSize = 2;
     private const int _Speed = 50;
-    
+
+    private const int colorWidth = 1920;
+    private const int colorHeight = 1080;
+
     private MultiSourceManager _MultiManager;
     private ColorSourceManager _ColorManager;
     private DepthSourceManager _DepthManager;
@@ -294,14 +297,25 @@ public class DepthSourceView : MonoBehaviour
             byte[] colorDataCopy = new byte[colorData.Length];
             byte[] jpgData;
             Buffer.BlockCopy(colorData, 0, colorDataCopy, 0, colorData.Length);
+            // Der nachfolgende Code vertauscht Rot- und Blaukanal, deswegen tauschen wir ihn hier auch schonmal
+            for (int y = 0; y < colorHeight; y++)
+            {
+                for (int x = 0; x < colorWidth; x++)
+                {
+                    int index = y * colorWidth * 4 + x * 4;
+                    // Vertausche erstes Byte (Rot) und drittes Byte (Blau)
+                    byte temp = colorDataCopy[index];
+                    colorDataCopy[index] = colorDataCopy[index + 2];
+                    colorDataCopy[index + 2] = temp;
+                }
+            }
 
             try
             {
-                // source: https://stackoverflow.com/questions/11730373/byte-array-to-bitmap-image
-                // doesn't seem to work yet
-                Bitmap bitmap = new Bitmap(1920, 1080, System.Drawing.Imaging.PixelFormat.Format32bppRgb);
-                BitmapData bmData = bitmap.LockBits(new Rectangle(0, 0, 1920, 1080), ImageLockMode.ReadWrite, bitmap.PixelFormat);
-                Marshal.Copy(colorDataCopy, 0, bmData.Scan0, 1920 * 1080 * 4);
+                // Quelle: https://stackoverflow.com/questions/11730373/byte-array-to-bitmap-image
+                Bitmap bitmap = new Bitmap(colorWidth, colorHeight, System.Drawing.Imaging.PixelFormat.Format32bppRgb);
+                BitmapData bmData = bitmap.LockBits(new Rectangle(0, 0, colorWidth, colorHeight), ImageLockMode.ReadWrite, bitmap.PixelFormat);
+                Marshal.Copy(colorDataCopy, 0, bmData.Scan0, colorWidth * colorHeight * 4);
                 bitmap.UnlockBits(bmData);
 
                 using (var ms = new MemoryStream())
