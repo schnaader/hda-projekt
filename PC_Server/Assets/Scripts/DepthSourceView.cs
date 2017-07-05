@@ -297,7 +297,7 @@ public class DepthSourceView : MonoBehaviour
             byte[] colorDataCopy = new byte[colorData.Length];
             byte[] jpgData;
             Buffer.BlockCopy(colorData, 0, colorDataCopy, 0, colorData.Length);
-            // Der nachfolgende Code vertauscht Rot- und Blaukanal, deswegen tauschen wir ihn hier auch schonmal
+            // Der nachfolgende Code zur JPG-Kompression vertauscht Rot- und Blaukanal, deswegen tauschen wir ihn hier auch schonmal
             for (int y = 0; y < colorHeight; y++)
             {
                 for (int x = 0; x < colorWidth; x++)
