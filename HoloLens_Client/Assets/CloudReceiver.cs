@@ -105,11 +105,12 @@ public class CloudReceiver : MonoBehaviour
                     int bottomRight = bottomLeft + 1;
 
                     _Triangles[triangleIndex++] = topLeft;
-                    _Triangles[triangleIndex++] = topRight;
-                    _Triangles[triangleIndex++] = bottomLeft;
                     _Triangles[triangleIndex++] = bottomLeft;
                     _Triangles[triangleIndex++] = topRight;
+
+                    _Triangles[triangleIndex++] = bottomLeft;
                     _Triangles[triangleIndex++] = bottomRight;
+                    _Triangles[triangleIndex++] = topRight;
                 }
             }
         }
